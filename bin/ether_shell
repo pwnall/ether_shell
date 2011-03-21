@@ -1,0 +1,9 @@
+#!/usr/bin/env ruby
+require 'rubygems'
+require 'ether_shell'
+
+require 'irb'
+
+EtherShell.
+
+IRB.start __FILE__
