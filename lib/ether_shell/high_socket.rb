@@ -2,21 +2,30 @@
 module EtherShell
 
 # Wraps an Ethernet socket and abstracts away the Ethernet II frame.
-module SocketProxy
+class HighSocket
   # Creates a wrapper around a raw Ethernet socket.
   #
   # Args:
-  #   raw_socket:: a raw Ethernet socket
-  #   mac:: 6-byte MAC address for the Ethernet socket
+  #   raw_socket_or_device:: a raw Ethernet socket or a string containing an
+  #                          Ethernet device name
   #   ether_type:: 2-byte Ethernet packet type number
+  #   mac_address:: 6-byte MAC address for the Ethernet socket (optional if
+  #                 raw_socket_or_device is an Ethernet device name)
   #
   # Raises:
   #   RuntimeError:: if mac isn't exactly 6-bytes long
-  def initialize(raw_socket, mac_address, ether_type)
-    check_mac mac
+  def initialize(raw_socket_or_device, ether_type, mac_address = nil)
+    check_mac mac_address if mac_address
     
-    @socket = raw_socket
-    @source_mac = mac_address.dup
+    if raw_socket_or_device.respond_to? :to_str
+      @source_mac = mac_address || RawSocket.mac(raw_socket_or_device)
+      @socket = RawSocket.socket raw_socket_or_device, ether_type
+    else
+      raise 'MAC address needed with raw socket' unless mac_address
+      @source_mac = mac_address.dup
+      @socket = raw_socket_or_device
+    end
+    
     @dest_mac = nil
     @ether_type = [ether_type].pack('n')
   end
@@ -31,6 +40,11 @@ module SocketProxy
   def connect(mac_address)
     check_mac mac_address
     @dest_mac = mac_address
+  end
+  
+  # Closes the underlying socket.
+  def close
+    @socket.close
   end
   
   # Sends an Ethernet II frame.
@@ -56,7 +70,7 @@ module SocketProxy
   def send_to(mac_address, data, send_flags = 0)
     check_mac mac_address
 
-    padding = (data.length < 46) ? "\0" * (data.length - 46) : ''
+    padding = (data.length < 46) ? "\0" * (46 - data.length) : ''
     packet = [mac_address, @source_mac, @ether_type, data, padding].join
     @socket.send packet, send_flags
   end
@@ -67,14 +81,14 @@ module SocketProxy
   #   buffer_size:: optional maximum packet size argument passed to the raw
   #                 socket's recv method
   #
-  # Returns the data in the frame.
+  # Returns the data and the source MAC address in the frame.
   #
   # This will discard incoming frames that don't match the MAC address that the
   # socket is connected to, or the Ethernet packet type.
   def recv(buffer_size = 8192)
     raise "Not connected" unless @dest_mac
     loop do
-      mac_address, data = recv_from buffer_size
+      data, mac_address = recv_from buffer_size
       return data if mac_address == @dest_mac
     end
   end
@@ -94,7 +108,7 @@ module SocketProxy
       packet = @socket.recv buffer_size
       next unless packet[12, 2] == @ether_type
       next unless packet[0, 6] == @source_mac
-      return packet[6, 12], packet[14..-1]
+      return packet[14..-1], packet[6, 6]
     end
   end
   

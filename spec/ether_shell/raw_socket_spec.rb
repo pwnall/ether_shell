@@ -20,6 +20,8 @@ describe 'RawSocket' do
   end
   
   describe 'socket' do
+    let(:eth_type) { 0x88B7 }
+    
     before { @socket = EtherShell::RawSocket.socket eth_device }
     after { @socket.close }
     
@@ -28,12 +30,11 @@ describe 'RawSocket' do
     end
     
     it 'should output a packet' do
-      packet = [mac, mac, [0x88B7].pack('n'), "\r\n" * 32].join
+      packet = [mac, mac, [eth_type].pack('n'), "\r\n" * 32].join
       @socket.send packet, 0
     end
 
     it 'should receive some network noise' do
-      packet = [mac, mac, [0x88B7].pack('n'), "\r\n" * 32].join
       @socket.recv(8192).should_not be_empty
     end
   end
