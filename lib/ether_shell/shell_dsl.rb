@@ -17,6 +17,10 @@ module ShellDsl
     mac_bytes = __parse_mac_data dest_mac
     @_socket = EtherShell::HighSocket.new eth_device, ether_type
     @_socket.connect mac_bytes
+    if @_verbose
+      print ['Connected to ', mac_bytes.unpack('H*').first, ' using ',
+             '%04x' % ether_type, ' via ', eth_device, "\n"].join
+    end
     self
   end
 
@@ -28,6 +32,8 @@ module ShellDsl
     raise "Not connected. did you forget to call connect?" unless @_socket
     @_socket.close
     @_socket = nil
+    print "Disconnected\n" if @_verbose
+    self
   end
   
   # Connects this shell to a pre-created socket
@@ -37,6 +43,7 @@ module ShellDsl
   def socket(high_socket)
     raise "Already connected. did you forget to call disconnect?" if @_socket
     @_socket = high_socket
+    print "Connected directly to socket\n" if @_verbose
     self
   end
   
@@ -44,8 +51,8 @@ module ShellDsl
   #
   # Args:
   #   true_or_false:: if true, out and expect will produce console output
-  def verbose(true_or_false)
-    @_verbose = verbose
+  def verbose(true_or_false = true)
+    @_verbose = true_or_false
     self
   end
   
@@ -89,7 +96,7 @@ module ShellDsl
     if bytes == expected_bytes
       print "OK\n" if @_verbose
     else
-      print " != #{expected_bytes.unpack('H*').first} ERROR\n" if @_verbose
+      print "!= #{expected_bytes.unpack('H*').first} ERROR\n" if @_verbose
       raise EtherShell::ExpectationError,
           "#{bytes.unpack('H*').first} != #{expected_bytes.unpack('H*').first}"
     end

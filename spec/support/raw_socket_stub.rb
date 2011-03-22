@@ -13,6 +13,11 @@ class RawSocketStub
     raise 'Weird flags' if flags != 0
     @sends << data
   end
+  
+  def close
+    @packets = nil
+    @sends = nil
+  end
 
   attr_reader :sends
 end

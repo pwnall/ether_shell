@@ -3,8 +3,10 @@ require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 describe 'ShellDsl' do
   let(:eth_device) { 'eth0' }
   let(:eth_type) { 0x0800 }
+  let(:eth_type_hex) { '0800' }
   let(:mac) { EtherShell::RawSocket.mac eth_device }
   let(:dest_mac) { "\x00\x11\x22\x33\x44\x55" }
+  let(:dest_mac_hex) { '001122334455' }
   let(:bcast_mac) do
     string = "\xff" * 6
     # Awful hack so the MAC matches any packet.
@@ -138,6 +140,59 @@ describe 'ShellDsl' do
       lambda {
         shell.expect '0xC0DEAA1338'
       }.should raise_error(EtherShell::ExpectationError)
+    end
+    
+    describe 'with verbosity enabled' do
+      before do
+        shell.verbose
+        shell.allow_console
+      end
+      
+      it 'should log disconnects' do
+        shell.disconnect
+        shell.console.should include('Disconnect')
+      end
+      
+      it 'should log direct connects' do
+        shell.disconnect
+        shell.socket stubbed_shell_socket
+        shell.console.should include('Connected')
+        shell.console.should include('directly to socket')
+      end
+      
+      it 'should log socket connects' do
+        shell.disconnect
+        shell.connect eth_device, eth_type, dest_mac
+        shell.console.should include('Connected')
+        shell.console.should include(eth_device)
+        shell.console.should include(eth_type_hex)
+        shell.console.should include(dest_mac_hex)
+      end
+      
+      it 'should log packet transmissions' do
+        shell.out '0x1337AAC0DE'
+        shell.console.should include('Sending')
+        shell.console.should include('OK')
+        shell.console.should include('1337aac0de')
+      end
+      
+      it 'should log successful expectations' do
+        shell.expect '0xC0DEAA1337'
+        shell.console.should include('Receiving')
+        shell.console.should include('OK')
+        shell.console.should include('c0deaa1337')
+      end
+      
+      it 'should log failed expectations' do
+        lambda {
+          shell.expect '0xC0DEAA1338'
+        }.should raise_error(EtherShell::ExpectationError)
+        shell.console.should include('Sending')
+        shell.console.should include('ERROR')
+        shell.console.should include('c0deaa1337')
+        shell.console.should include('c0deaa1338')
+        shell.console.should include('!=')
+      end
     end
   end
 end
