@@ -1,6 +1,42 @@
 = ether_shell
 
-Description goes here.
+ether_shell installs an IRB session with a DSL for testing Ethernet devices.
+
+== Usage
+
+Installing the gem will give you an ether_shell binary. The binary can be
+launched standalone to get to the IRB session, or it can be given a script that
+it will execute. Here is how I use it.
+
+    ether_shell < example.esh
+    
+Here is an example.esh that describes the DSL by example.
+
+    # All commands will log to standard output.
+    verbose
+    # IP's Ethernet II protocol number is 0x0800
+    connect 'eth0', 0x0800, '0x112233445566'
+    disconnect
+    # The device's Ethernet MAC can be specified in a number of ways.
+    connect 'eth0', 0x0800, 'BADMAC'
+    disconnect
+    connect 'eth0', 0x0800, '112233445566'
+    disconnect
+    # Sends a packet to the device.
+    out "This is short and will be padded"
+    # Again, multiple ways of specifying a packet are supported.
+    out "0xCAFEBABE"
+    out [0xDE, 0xAD, 0xBE, 0xAF]
+    # Receives a packet and compares it with a golden value.
+    # If the device echoed packets, these would be valid expectations. 
+    expect "This is short and will be padded"
+    expect "0xCAFEBABE000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+    expect [0xDE, 0xAD, 0xBE, 0xAF] + [0x00] * 42
+    disconnect
+    exit
+
+The code should have full RSpec coverage, and the RSpecs can be used for
+documetation. You're most likely interested in the spec for ShellDsl.
 
 == Contributing to ether_shell
  
@@ -14,6 +50,5 @@ Description goes here.
 
 == Copyright
 
-Copyright (c) 2011 Victor Costan. See LICENSE.txt for
+Copyright (c) 2011 Massachusetts Institute of Technology. See LICENSE.txt for
 further details.
-

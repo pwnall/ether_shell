@@ -187,7 +187,7 @@ describe 'ShellDsl' do
         lambda {
           shell.expect '0xC0DEAA1338'
         }.should raise_error(EtherShell::ExpectationError)
-        shell.console.should include('Sending')
+        shell.console.should include('Receiving')
         shell.console.should include('ERROR')
         shell.console.should include('c0deaa1337')
         shell.console.should include('c0deaa1338')

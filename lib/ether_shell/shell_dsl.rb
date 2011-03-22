@@ -14,14 +14,20 @@ module ShellDsl
   #              6-byte string, 
   def connect(eth_device, ether_type, dest_mac)
     raise "Already connected. did you forget to call disconnect?" if @_socket
-    mac_bytes = __parse_mac_data dest_mac
+    mac_bytes = EtherShell::ShellDsl.parse_mac_data dest_mac
     @_socket = EtherShell::HighSocket.new eth_device, ether_type
     @_socket.connect mac_bytes
     if @_verbose
       print ['Connected to ', mac_bytes.unpack('H*').first, ' using ',
              '%04x' % ether_type, ' via ', eth_device, "\n"].join
     end
-    self
+    @_nothing = ''
+    class <<@_nothing
+      def inspect
+        ''
+      end
+    end
+    EtherShell::ShellDsl.nothing
   end
 
   # Disconnects this shell's Ethernet socket.
@@ -33,7 +39,7 @@ module ShellDsl
     @_socket.close
     @_socket = nil
     print "Disconnected\n" if @_verbose
-    self
+    EtherShell::ShellDsl.nothing
   end
   
   # Connects this shell to a pre-created socket
@@ -44,7 +50,7 @@ module ShellDsl
     raise "Already connected. did you forget to call disconnect?" if @_socket
     @_socket = high_socket
     print "Connected directly to socket\n" if @_verbose
-    self
+    EtherShell::ShellDsl.nothing
   end
   
   # Enables or disables the console output in out and expect.
@@ -53,7 +59,7 @@ module ShellDsl
   #   true_or_false:: if true, out and expect will produce console output
   def verbose(true_or_false = true)
     @_verbose = true_or_false
-    self
+    EtherShell::ShellDsl.nothing
   end
   
   # Outputs a packet.
@@ -67,13 +73,13 @@ module ShellDsl
   #                  connect or socket
   def out(packet_data)
     raise "Not connected. did you forget to call connect?" unless @_socket
-    bytes = __parse_packet_data packet_data
+    bytes = EtherShell::ShellDsl.parse_packet_data packet_data
     
     
     print "Sending #{bytes.unpack('H*').first}... " if @_verbose
     @_socket.send bytes
     print "OK\n" if @_verbose
-    self
+    EtherShell::ShellDsl.nothing
   end
   
   # Receives a packet and matches it against an expected value.
@@ -88,7 +94,7 @@ module ShellDsl
   #   RuntimeError:: if the received packet doesn't match the expected value
   def expect(packet_data)
     raise "Not connected. did you forget to call connect?" unless @_socket
-    expected_bytes = __parse_packet_data packet_data
+    expected_bytes = EtherShell::ShellDsl.parse_packet_data packet_data
     
     print "Receiving... " if @_verbose
     bytes = @_socket.recv
@@ -100,11 +106,11 @@ module ShellDsl
       raise EtherShell::ExpectationError,
           "#{bytes.unpack('H*').first} != #{expected_bytes.unpack('H*').first}"
     end
-    self
+    EtherShell::ShellDsl.nothing
   end
   
   # :nodoc: turns a packet pattern into a string of raw bytes
-  def __parse_packet_data(packet_data)
+  def self.parse_packet_data(packet_data)
     if packet_data.kind_of? Array
       # Array of integers.
       packet_data.pack('C*')
@@ -116,21 +122,30 @@ module ShellDsl
       end
     end
   end
-  private :__parse_packet_data
 
   # :nodoc: turns a packet pattern into a string of raw bytes
-  def __parse_mac_data(mac_data)
+  def self.parse_mac_data(mac_data)
     if mac_data.length == 12
-      mac_data.unpack('H*').first
+      [mac_data].pack('H*')
     elsif mac_data.length == 14 && mac_data[0, 2] == '0x'
-      mac_data[2, 12].unpack('H*').first
+      [mac_data[2, 12]].pack('H*')
     elsif mac_data.kind_of? Array
       mac_data.pack('C*')
     else
       mac_data
     end
   end
-  private :__parse_mac_data
+  
+  # :nodoc: value that doesn't show up in irb
+  def self.nothing
+    @nothing ||= Nothing.new
+  end
+  
+  class Nothing
+    def inspect
+      ''
+    end
+  end
 end  # module EtherShell::ShellDsl
 
 end  # namespace EtherShell

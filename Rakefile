@@ -15,14 +15,14 @@ Jeweler::Tasks.new do |gem|
   gem.name = "ether_shell"
   gem.homepage = "http://github.com/pwnall/ether_shell"
   gem.license = "MIT"
-  gem.summary = %Q{TODO: one-line summary of your gem}
-  gem.description = %Q{TODO: longer description of your gem}
-  gem.email = "costan@gmail.com"
+  gem.summary = %Q{IRB session specialized for testing Ethernet devices}
+  gem.description = %Q{IRB session specialized for testing Ethernet devices}
+  gem.email = "victor@costan.us"
   gem.authors = ["Victor Costan"]
   # Include your dependencies below. Runtime dependencies are required when using your gem,
   # and development dependencies are only needed for development (ie running rake tasks, tests, etc)
   #  gem.add_runtime_dependency 'jabber4r', '> 0.1'
-  #  gem.add_development_dependency 'rspec', '> 1.2.3'
+  gem.add_development_dependency 'rspec', '> 1.2.3'
 end
 Jeweler::RubygemsDotOrgTasks.new
 
