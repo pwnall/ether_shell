@@ -91,7 +91,7 @@ module ShellDsl
     else
       print " != #{expected_bytes.unpack('H*').first} ERROR\n" if @_verbose
       raise EtherShell::ExpectationError,
-            "#{bytes.unpack('H*').first} != expected_bytes.unpack('H*').first"
+          "#{bytes.unpack('H*').first} != #{expected_bytes.unpack('H*').first}"
     end
     self
   end
