@@ -4,6 +4,5 @@ require 'ether_shell'
 
 require 'irb'
 
-EtherShell.
-
+include EtherShell::ShellDsl
 IRB.start __FILE__

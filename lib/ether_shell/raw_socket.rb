@@ -1,3 +1,5 @@
+require 'socket'
+
 # :nodoc: namespace
 module EtherShell
 
@@ -95,6 +97,6 @@ module RawSocket
     end
     private :htons
   end
-end
+end  # module EtherShell::RawSocket
 
 end  # namespace EtherShell

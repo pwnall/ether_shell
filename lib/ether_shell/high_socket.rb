@@ -117,6 +117,6 @@ class HighSocket
     raise "Invalid MAC address" unless mac_address.length == 6
   end
   private :check_mac
-end
+end  # class EtherShell::HighSocket
 
 end  # namespace EtherShell
