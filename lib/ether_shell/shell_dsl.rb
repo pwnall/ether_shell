@@ -10,11 +10,24 @@ module ShellDsl
   # Args:
   #   eth_device:: an Ethernet device name, e.g. 'eth0'
   #   ether_type:: 2-byte Ethernet packet type number
-  #   dest_mac:: MAC address of the endpoint to be tested
+  #   dest_mac:: MAC address of the endpoint to be tested; it can be a raw
+  #              6-byte string, 
   def connect(eth_device, ether_type, dest_mac)
+    raise "Already connected. did you forget to call disconnect?" if @_socket
+    mac_bytes = __parse_mac_data dest_mac
     @_socket = EtherShell::HighSocket.new eth_device, ether_type
-    @_socket.connect dest_mac
+    @_socket.connect mac_bytes
     self
+  end
+
+  # Disconnects this shell's Ethernet socket.
+  #
+  # A socket should have been connected previously, using connect or socket. The
+  # shell can take further connect and socket calls.
+  def disconnect
+    raise "Not connected. did you forget to call connect?" unless @_socket
+    @_socket.close
+    @_socket = nil
   end
   
   # Connects this shell to a pre-created socket
@@ -22,6 +35,7 @@ module ShellDsl
   # Args:
   #   high_socket:: socket that behaves like an EtherShell::HighSocket
   def socket(high_socket)
+    raise "Already connected. did you forget to call disconnect?" if @_socket
     @_socket = high_socket
     self
   end
@@ -76,12 +90,13 @@ module ShellDsl
       print "OK\n" if @_verbose
     else
       print " != #{expected_bytes.unpack('H*').first} ERROR\n" if @_verbose
-      raise 'Expectation failed'
+      raise EtherShell::ExpectationError,
+            "#{bytes.unpack('H*').first} != expected_bytes.unpack('H*').first"
     end
     self
   end
   
-  # :nodoc:
+  # :nodoc: turns a packet pattern into a string of raw bytes
   def __parse_packet_data(packet_data)
     if packet_data.kind_of? Array
       # Array of integers.
@@ -95,6 +110,20 @@ module ShellDsl
     end
   end
   private :__parse_packet_data
+
+  # :nodoc: turns a packet pattern into a string of raw bytes
+  def __parse_mac_data(mac_data)
+    if mac_data.length == 12
+      mac_data.unpack('H*').first
+    elsif mac_data.length == 14 && mac_data[0, 2] == '0x'
+      mac_data[2, 12].unpack('H*').first
+    elsif mac_data.kind_of? Array
+      mac_data.pack('C*')
+    else
+      mac_data
+    end
+  end
+  private :__parse_mac_data
 end  # module EtherShell::ShellDsl
 
 end  # namespace EtherShell

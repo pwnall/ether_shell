@@ -89,7 +89,7 @@ class HighSocket
     raise "Not connected" unless @dest_mac
     loop do
       data, mac_address = recv_from buffer_size
-      return data if mac_address == @dest_mac
+      return data if @dest_mac == mac_address
     end
   end
   
