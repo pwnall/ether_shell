@@ -71,7 +71,7 @@ module RawSocket
     def all_ethernet_protocols
       case RUBY_PLATFORM
       when /linux/
-        3
+        3  # cat /usr/include/linux/if_ether.h | grep ETH_P_ALL
       else
         raise "Unsupported platform #{RUBY_PLATFORM}"
       end
