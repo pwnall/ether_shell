@@ -1,3 +1,5 @@
+require 'ethernet'
+
 # :nodoc: namespace
 module EtherShell
 
@@ -15,7 +17,7 @@ module ShellDsl
   def connect(eth_device, ether_type, dest_mac)
     raise "Already connected. did you forget to call disconnect?" if @_socket
     mac_bytes = EtherShell::ShellDsl.parse_mac_data dest_mac
-    @_socket = EtherShell::HighSocket.new eth_device, ether_type
+    @_socket = Ethernet.socket eth_device, ether_type
     @_socket.connect mac_bytes
     if @_verbose
       print ['Connected to ', mac_bytes.unpack('H*').first, ' using ',

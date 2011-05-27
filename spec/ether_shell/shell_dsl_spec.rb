@@ -1,10 +1,10 @@
 require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 
 describe 'ShellDsl' do
-  let(:eth_device) { 'eth0' }
+  let(:eth_device) { Ethernet::Devices.all.sort.first }
   let(:eth_type) { 0x0800 }
   let(:eth_type_hex) { '0800' }
-  let(:mac) { EtherShell::RawSocket.mac eth_device }
+  let(:mac) { Ethernet::Devices.mac eth_device }
   let(:dest_mac) { "\x00\x11\x22\x33\x44\x55" }
   let(:dest_mac_hex) { '001122334455' }
   let(:bcast_mac) do
@@ -38,7 +38,7 @@ describe 'ShellDsl' do
     end
     
     it 'should not accept a socket again' do
-      raw_socket = EtherShell::HighSocket.new eth_device, eth_type
+      raw_socket = Ethernet.socket eth_device, eth_type
       lambda {
         shell.socket raw_socket
       }.should raise_error(RuntimeError)
@@ -55,7 +55,7 @@ describe 'ShellDsl' do
   
   describe 'connected to a live socket' do
     let(:live_socket) do
-      socket = EtherShell::HighSocket.new eth_device, eth_type
+      socket = Ethernet.socket eth_device, eth_type
       socket.connect bcast_mac
       socket
     end
@@ -90,7 +90,7 @@ describe 'ShellDsl' do
       ])
     end
     let(:stubbed_shell_socket) do
-      socket = EtherShell::HighSocket.new socket_stub, eth_type, mac
+      socket = Ethernet::FrameSocket.new socket_stub, eth_type, mac
       socket.connect dest_mac
       socket
     end
