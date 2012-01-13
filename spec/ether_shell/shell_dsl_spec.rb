@@ -1,3 +1,5 @@
+# Encoding: ASCII-8BIT
+
 require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 
 describe 'ShellDsl' do
@@ -84,7 +86,7 @@ describe 'ShellDsl' do
     let(:socket_stub) do
       RawSocketStub.new([
         [mac, dest_mac, "\x88\xB7", 'Wrong Ethernet type'].join,
-        [bcast_mac, dest_mac, [eth_type].pack('n'), 'Wrong dest MAC'].join,
+        [dest_mac, dest_mac, [eth_type].pack('n'), 'Wrong dest MAC'].join,
         [mac, bcast_mac, [eth_type].pack('n'), 'Bcast'].join,
         [mac, dest_mac, [eth_type].pack('n'), "\xC0\xDE\xAA\x13\x37"].join,
       ])
